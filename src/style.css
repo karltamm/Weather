@@ -1,0 +1,34 @@
+#search {
+  margin: 0 auto;
+  max-width: 500px;
+}
+
+#search form {
+  margin-bottom: 20px;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-top: 100px;
+  padding-bottom: 100px;
+}
+
+body {
+  background-color: rgb(243, 243, 243);
+  overflow-y: scroll; /* To avoid jitter when results show up */
+}
+
+#forecast {
+  margin-top: 150px;
+}
+
+#current_weather {
+  padding: 20px;
+  background-color: #fcac0d;
+  border-radius: 15px;
+}
+
+#cur_temp {
+  font-size: 5rem;
+}

@@ -1,12 +1,14 @@
 /* CONSTANTS */
 const API_KEY = "9625d17991923b2fcd6ebcbc7a90fc25";
+const NUM_UPCOMING_DAYS = 5;
 
 /* FUNCTIONS */
+/* Forecast */
 function getUserCoords(callback) {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition((position) => {
       var coords = {
-        long: position.coords.longitude,
+        lon: position.coords.longitude,
         lat: position.coords.latitude,
       };
 
@@ -15,27 +17,18 @@ function getUserCoords(callback) {
   }
 }
 
-function getWeatherByPos(callback, errorCallback) {
-  getUserCoords((coords) => {
-    var API_URL = `https://api.openweathermap.org/data/2.5/weather?lat=${coords.lat}&lon=${coords.long}&appid=${API_KEY}&units=metric&lang=en`;
-    apiCall(
-      API_URL,
-      (response) => {
-        callback(formatWeatherData(response));
-      },
-      () => {
-        errorCallback();
-      }
-    );
-  });
-}
+function getCoordsByName(loc_name, callback, errorCallback) {
+  var api_url = `http://api.openweathermap.org/geo/1.0/direct?q=${loc_name}&limit=1&appid=${API_KEY}`;
 
-function getWeatherByName(location, callback, errorCallback) {
-  var API_URL = `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${API_KEY}&units=metric&lang=en`;
   apiCall(
-    API_URL,
+    api_url,
     (response) => {
-      callback(formatWeatherData(response));
+      var coords = {
+        lat: response[0].lat,
+        lon: response[0].lon,
+      };
+
+      callback(coords);
     },
     () => {
       errorCallback();
@@ -44,9 +37,9 @@ function getWeatherByName(location, callback, errorCallback) {
 }
 
 function getForecast(coords, callback, errorCallback) {
-  var API_URL = `https://api.openweathermap.org/data/2.5/onecall?lat=${coords.lat}&lon=${coords.lon}&exclude=current,minutely,hourly,alerts&appid=${API_KEY}&units=metric&lang=en`;
+  var api_url = `https://api.openweathermap.org/data/2.5/onecall?lat=${coords.lat}&lon=${coords.lon}&exclude=minutely,hourly,alerts&appid=${API_KEY}&units=metric&lang=en`;
   apiCall(
-    API_URL,
+    api_url,
     (response) => {
       callback(formatForecastData(response));
     },
@@ -54,6 +47,19 @@ function getForecast(coords, callback, errorCallback) {
       errorCallback();
     }
   );
+}
+
+/* Fetch */
+function apiCall(API_URL, callback, errorCallback) {
+  fetch(API_URL)
+    .then(handleFetchError)
+    .then((response) => {
+      /* Parse response */
+      return response.json();
+    })
+    .then(handleDataError)
+    .then((response) => callback(response))
+    .catch((error) => errorCallback(error));
 }
 
 function handleFetchError(response) {
@@ -64,46 +70,50 @@ function handleFetchError(response) {
   return response;
 }
 
+function handleDataError(data) {
+  if (data.length === 0) {
+    throw Error("Empty fetch response");
+  }
+
+  return data;
+}
+
+/* Format data */
+function formatForecastData(res) {
+  var data = [];
+
+  var cur = res.current; // Data about current weather
+  var next = res.daily; // Data about current weather
+
+  for (var day = 0; day <= NUM_UPCOMING_DAYS; day++) {
+    if (day === 0) {
+      /* Current weather */
+      data[0] = {
+        time: cur.dt,
+        cur_temp: Math.round(cur.temp),
+        feels_like: Math.round(cur.feels_like),
+        wind: Math.round(cur.wind_speed),
+        desc: captalizeFirstLetter(cur.weather[0].description),
+        icon: cur.weather[0].icon,
+      };
+    } else {
+      /* Upcoming weather */
+      data[day] = {
+        time: next[day].dt,
+        day_temp: Math.round(next[day].temp.day),
+        night_temp: Math.round(next[day].temp.night),
+        desc: captalizeFirstLetter(next[day].weather[0].description),
+        icon: next[day].weather[0].icon,
+      };
+    }
+  }
+
+  return data;
+}
+
 function captalizeFirstLetter(string) {
   return string[0].toUpperCase() + string.slice(1);
 }
 
-function apiCall(API_URL, callback, errorCallback) {
-  fetch(API_URL)
-    .then(handleFetchError)
-    .then((response) => {
-      return response.json();
-    })
-    .then((response) => callback(response))
-    .catch((error) => errorCallback(error));
-}
-
-function formatWeatherData(response) {
-  var data = {};
-
-  data.coord = response.coord;
-  data.location = response.name;
-  data.temp = Math.round(response.main.temp);
-  data.desc = captalizeFirstLetter(response.weather[0].description);
-  data.icon = response.weather[0].icon;
-  data.feels_like = Math.round(response.main.feels_like);
-  data.wind = Math.round(response.wind.speed);
-
-  return data;
-}
-
-function formatForecastData(response) {
-  var data = {};
-
-  //   data.location = response.name;
-  //   data.temp = Math.round(response.main.temp);
-  //   data.desc = captalizeFirstLetter(response.weather[0].description);
-  //   data.icon = response.weather[0].icon;
-  //   data.feels_like = Math.round(response.main.feels_like);
-  //   data.wind = Math.round(response.wind.speed);
-
-  return data;
-}
-
 /* EXPORT */
-export default { getWeatherByName, getWeatherByPos, getForecast };
+export default { getUserCoords, getForecast, getCoordsByName };
