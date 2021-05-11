@@ -21,16 +21,20 @@ section {
 header {
   margin: 0 auto;
   max-width: 400px;
-  margin-top: -100px; /* To counter header image */
+  margin-top: -120px; /* To counter header image */
 }
 
 #site_title {
   font-size: 6em;
   line-height: 1;
+  margin-left: -8px;
 }
 
 #site_subtitle {
   font-size: 2em;
+}
+
+#author {
   margin-bottom: 30px;
 }
 
@@ -38,48 +42,25 @@ header {
   margin-bottom: 20px;
 }
 
-/* Loader */
-.loader {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-.loader div {
-  position: absolute;
-  border: 4px solid #fff;
-  opacity: 1;
-  border-radius: 50%;
-  animation: loader 1s cubic-bezier(0, 0.2, 0.8, 1) infinite;
-}
-.loader div:nth-child(2) {
-  animation-delay: -0.5s;
-}
-@keyframes loader {
-  0% {
-    top: 36px;
-    left: 36px;
-    width: 0;
-    height: 0;
-    opacity: 1;
-  }
-  100% {
-    top: 0px;
-    left: 0px;
-    width: 72px;
-    height: 72px;
-    opacity: 0;
-  }
+/* Location */
+.leaflet-container {
+  height: 300px;
+  border-radius: 15px;
 }
 
-/* Location */
 #location_name {
   font-size: 1.8em;
   color: #2a47ff;
   text-align: right;
+  margin-bottom: 8px;
 }
 
 /* Forecast */
+#forecast {
+  opacity: 0;
+  transition: opacity 0.5s ease; /* Forecast is "hidden" (opacity 0) while loader works */
+}
+
 .day {
   margin-bottom: 50px;
 }
@@ -123,7 +104,7 @@ header {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  width: 130px;
+  width: 160px;
   justify-content: space-between;
   margin: 10px 0;
 }
@@ -142,7 +123,7 @@ header {
 }
 
 .weather_icon {
-  margin: -10px;
+  margin: -20px;
 }
 
 /* Error message */

@@ -48,6 +48,10 @@ function getNameByCoords(coords, callback, errorCallback) {
       var location = {
         name: response[0].name,
         country: getCountryNameByCode(response[0].country),
+        coords: {
+          lat: response[0].lat,
+          lon: response[0].lon,
+        },
       };
       callback(location);
     },

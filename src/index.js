@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
-import API from "./api";
-import "./style.css";
-import error_image from "./lost_illustration.svg";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
+
+import API from "./js/api";
+import "./style/style.css";
+import error_image from "./style/lost_illustration.svg";
 
 /* CONSTANTS */
 const MONTHS = [
@@ -36,34 +38,38 @@ var show_error = false;
 /* REACT */
 function App() {
   /* States */
-  var [location_name, setLocation] = useState({});
+  var [location_data, setLocation] = useState({});
   var [query, setQuery] = useState({});
   var [forecast, setForecast] = useState({});
   var [error, setError] = useState({});
+  var [loading, setLoader] = useState(false);
 
   /* Events */
   function searchWeather(event) {
     event.preventDefault();
+
+    setLoader(true);
+
     API.getCoordsByName(
       query,
       (coords) => {
         updateForecast(coords);
       },
       () => {
-        show_error = true;
-        setError(true);
+        handleError();
       }
     );
   }
 
   function getLocalWeather() {
+    setLoader(true);
+
     API.getUserCoords(
       (coords) => {
         updateForecast(coords);
       },
       () => {
-        show_error = true;
-        setError(true);
+        handleError();
       }
     );
   }
@@ -78,48 +84,39 @@ function App() {
             setLocation(location);
             setForecast(data);
             setError(false);
+            setLoader(false);
           },
           () => {
-            show_error = true;
-            setError(true);
+            handleError();
           }
         );
       },
       () => {
-        show_error = true;
-        setError(true);
+        handleError();
       }
     );
   }
 
-  /* Rendering */
-  function getWeatherIcon(day) {
-    return `http://openweathermap.org/img/wn/${forecast[day].icon}@2x.png`;
+  function handleError() {
+    show_error = true;
+    setError(true);
+    setLoader(false);
   }
 
+  /* Rendering */
+  /* Weather */
   function showWeatherInfo() {
     if (!error) {
       return (
-        <section id="forecast">
-          <div id="location_name">
-            {location_name.name}, {location_name.country}
-          </div>
-          {showCurrentWeather()}
-          {showForecast()}
-        </section>
+        <React.Fragment>
+          <section id="forecast">
+            {showMap()}
+            {showCurrentWeather()}
+            {showForecast()}
+          </section>
+        </React.Fragment>
       );
-    } else if (error && show_error) {
-      return showError();
     }
-  }
-
-  function showError() {
-    return (
-      <section id="error">
-        <img id="error_image" src={error_image} alt="Lost" />
-        <span id="error_message">Error: no such location</span>
-      </section>
-    );
   }
 
   function showCurrentWeather() {
@@ -152,6 +149,10 @@ function App() {
     );
   }
 
+  function getWeatherIcon(day) {
+    return `http://openweathermap.org/img/wn/${forecast[day].icon}@2x.png`;
+  }
+
   function showForecast() {
     var upcoming_days = forecast.slice(1);
 
@@ -178,11 +179,17 @@ function App() {
           <div className="weather_tab">
             <div className="temp_side">
               <div className="temp_wrapper">
-                <span className="temp_label">Day</span>
+                <span className="temp_label">
+                  <i className="bi bi-sun"> </i>
+                  Day
+                </span>
                 <span className="temp_value">{data.day_temp}°C</span>
               </div>
               <div className="temp_wrapper">
-                <span className="temp_label">Night</span>
+                <span className="temp_label">
+                  <i className="bi bi-moon"> </i>
+                  Night
+                </span>
                 <span className="temp_value">{data.night_temp}°C</span>
               </div>
             </div>
@@ -201,6 +208,7 @@ function App() {
     );
   }
 
+  /* Search */
   function showSearch() {
     return (
       <section id="search">
@@ -241,20 +249,89 @@ function App() {
     );
   }
 
+  function showLoader() {
+    var forecast_el = document.getElementById("forecast");
+    var error_el = document.getElementById("error");
+
+    if (loading) {
+      /* Hide elements*/
+      if (forecast_el) forecast_el.style.opacity = 0;
+      if (error_el) error_el.style.visibility = "hidden";
+
+      return (
+        <div className="d-flex justify-content-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      );
+    } else {
+      /* Show elements */
+      if (forecast_el) forecast_el.style.opacity = 1;
+      if (error_el) error_el.style.visibility = "visible";
+
+      return "";
+    }
+  }
+
+  function showError() {
+    if (error && show_error) {
+      return (
+        <section id="error">
+          <img id="error_image" src={error_image} alt="Lost" />
+          <span id="error_message">Error: no such location</span>
+        </section>
+      );
+    } else {
+      return "";
+    }
+  }
+
+  function showMap() {
+    var pos = [location_data.coords.lat, location_data.coords.lon];
+
+    return (
+      <section>
+        <div id="location_name">
+          {location_data.name}, {location_data.country}
+        </div>
+
+        <MapContainer center={pos} zoom={13} scrollWheelZoom={false}>
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          <Marker position={pos}></Marker>
+          <UpdateMapView></UpdateMapView>
+        </MapContainer>
+      </section>
+    );
+  }
+
+  function UpdateMapView() {
+    var map = useMap();
+    map.setView([location_data.coords.lat, location_data.coords.lon], 13);
+    return null;
+  }
+
+  /* Misc */
   function showHeader() {
     return (
       <header>
         <div id="site_title">Peek</div>
         <div id="site_subtitle">A weather app</div>
+        <div id="author">
+          Made by <a href="https://github.com/karltamm">Karl-Heinrich</a>
+        </div>
         {showSearch()}
       </header>
     );
   }
 
+  /* COMPLETE */
   return (
     <React.Fragment>
       {showHeader()}
       {showWeatherInfo()}
+      {showLoader()}
+      {showError()}
     </React.Fragment>
   );
 }
@@ -268,7 +345,6 @@ function formatDate(epoch_time) {
   var day = DAYS[date_obj.getDay()];
   var date = date_obj.getDate();
   var month = MONTHS[date_obj.getMonth()];
-  //var year = date_obj.getFullYear();
 
   return `${day}, ${month} ${date}`;
 }
