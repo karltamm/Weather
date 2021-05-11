@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ReactDOM from "react-dom";
 import API from "./api";
 import "./style.css";
+import error_image from "./lost_illustration.svg";
 
 /* CONSTANTS */
 const MONTHS = [
@@ -20,13 +21,13 @@ const MONTHS = [
 ];
 
 const DAYS = [
+  "Sunday",
   "Monday",
   "Tuesday",
   "Wednesday",
   "Thursday",
   "Friday",
   "Saturday",
-  "Sunday",
 ];
 
 /* GLOBAL VARIABLES */
@@ -34,11 +35,11 @@ var show_error = false;
 
 /* REACT */
 function App() {
-  /* DOM states */
+  /* States */
   var [location_name, setLocation] = useState({});
   var [query, setQuery] = useState({});
-  var [forecast, updateForecast] = useState({});
-  var [error, raiseError] = useState({});
+  var [forecast, setForecast] = useState({});
+  var [error, setError] = useState({});
 
   /* Events */
   function searchWeather(event) {
@@ -46,11 +47,11 @@ function App() {
     API.getCoordsByName(
       query,
       (coords) => {
-        getForecast(coords, query);
+        updateForecast(coords);
       },
       () => {
         show_error = true;
-        raiseError(true);
+        setError(true);
       }
     );
   }
@@ -58,26 +59,35 @@ function App() {
   function getLocalWeather() {
     API.getUserCoords(
       (coords) => {
-        getForecast(coords, "Current location");
+        updateForecast(coords);
       },
       () => {
         show_error = true;
-        raiseError(true);
+        setError(true);
       }
     );
   }
 
-  function getForecast(coords, location) {
+  function updateForecast(coords) {
     API.getForecast(
       coords,
       (data) => {
-        updateForecast(data);
-        setLocation(location); // Update info on screen
-        raiseError(false);
+        API.getNameByCoords(
+          coords,
+          (location) => {
+            setLocation(location);
+            setForecast(data);
+            setError(false);
+          },
+          () => {
+            show_error = true;
+            setError(true);
+          }
+        );
       },
       () => {
         show_error = true;
-        raiseError(true);
+        setError(true);
       }
     );
   }
@@ -89,68 +99,112 @@ function App() {
 
   function showWeatherInfo() {
     if (!error) {
-      var upcoming_days = forecast.slice(1);
-
       return (
         <section id="forecast">
-          <div id="location_name">{location_name}</div>
-
-          <section id="current_weather" className="row">
-            {generateCurrent()}
-          </section>
-
-          <section id="upcoming_weather" className="row">
-            <h2>Upcoming weather</h2>
-            <ul id="upcoming_days">
-              {upcoming_days.map((data, index) => {
-                return generateNextDay(data, index);
-              })}
-            </ul>
-          </section>
+          <div id="location_name">
+            {location_name.name}, {location_name.country}
+          </div>
+          {showCurrentWeather()}
+          {showForecast()}
         </section>
       );
     } else if (error && show_error) {
-      return <span>No such location</span>;
+      return showError();
     }
   }
 
-  function generateCurrent() {
-    var cur = forecast[0]; // Current weather
+  function showError() {
+    return (
+      <section id="error">
+        <img id="error_image" src={error_image} alt="Lost" />
+        <span id="error_message">Error: no such location</span>
+      </section>
+    );
+  }
+
+  function showCurrentWeather() {
+    var now = forecast[0];
 
     return (
-      <React.Fragment>
-        <div className="col">
-          <div id="cur_temp">{cur.cur_temp}°C</div>
-          <div id="cur_feels_like">Feels like {cur.feels_like} °C</div>
+      <div id="current_weather" className="day">
+        <div className="period">
+          <span className="period_title">Currently</span>
+          <span className="date">{formatDate(now.time)}</span>
         </div>
 
-        <div className="col">
-          <h2>Currently</h2>
-          <h3>{formatDate(cur.time)}</h3>
-          {/* <img src={getWeatherIcon(0)} /> */}
-          <p id="cur_desc">{cur.desc}</p>
-          <div id="cur_wind">{cur.wind}</div>
+        <div className="weather_tab">
+          <div className="temp_side">
+            <div className="temp">{now.temp}°C</div>
+            <div className="feels">Feels like {now.feels} °C</div>
+          </div>
+
+          <div className="extra_side">
+            <img
+              src={getWeatherIcon(0)}
+              className="weather_icon"
+              alt="A symbol for weather"
+            />
+            <span className="weather_desc">{now.desc}</span>
+            <span className="wind">Wind {now.wind} m/s</span>
+          </div>
         </div>
-      </React.Fragment>
+      </div>
+    );
+  }
+
+  function showForecast() {
+    var upcoming_days = forecast.slice(1);
+
+    return (
+      <div id="upcoming_weather">
+        <span id="upcoming_title" className="period_title">
+          Upcoming
+        </span>
+        {upcoming_days.map((data, index) => {
+          return generateNextDay(data, index);
+        })}
+      </div>
     );
   }
 
   function generateNextDay(data, index) {
     return (
-      <li key={index}>
-        <h3 className="date"></h3>
-        <img className="weather_icon" src={getWeatherIcon(index)} />
-        <p className="weather_desc">{data.desc}</p>
-        <span className="day_temp">{data.day_temp}</span>
-        <span className="night_temp">{data.night_temp}</span>
-      </li>
+      <React.Fragment>
+        <div key={index} className="day">
+          <div className="period">
+            <span className="date">{formatDate(data.time)}</span>
+          </div>
+
+          <div className="weather_tab">
+            <div className="temp_side">
+              <div className="temp_wrapper">
+                <span className="temp_label">Day</span>
+                <span className="temp_value">{data.day_temp}°C</span>
+              </div>
+              <div className="temp_wrapper">
+                <span className="temp_label">Night</span>
+                <span className="temp_value">{data.night_temp}°C</span>
+              </div>
+            </div>
+
+            <div className="extra_side">
+              <img
+                src={getWeatherIcon(index)}
+                className="weather_icon"
+                alt="A symbol for weather"
+              />
+              <span className="weather_desc">{data.desc}</span>
+            </div>
+          </div>
+        </div>
+      </React.Fragment>
     );
   }
 
   function showSearch() {
     return (
       <section id="search">
-        <div className="row">
+        <div>
           <div className="col">
             <form className="input-group" onSubmit={searchWeather}>
               <input
@@ -164,6 +218,7 @@ function App() {
                 type="button"
                 className="form-control"
                 className="btn btn-primary"
+                onClick={searchWeather}
               >
                 Search
               </button>
@@ -171,7 +226,7 @@ function App() {
           </div>
         </div>
 
-        <div className="row">
+        <div>
           <div className="col">
             <button
               type="button"
@@ -186,9 +241,19 @@ function App() {
     );
   }
 
+  function showHeader() {
+    return (
+      <header>
+        <div id="site_title">Peek</div>
+        <div id="site_subtitle">A weather app</div>
+        {showSearch()}
+      </header>
+    );
+  }
+
   return (
     <React.Fragment>
-      {showSearch()}
+      {showHeader()}
       {showWeatherInfo()}
     </React.Fragment>
   );
@@ -198,13 +263,12 @@ ReactDOM.render(<App />, document.getElementById("root"));
 
 /* FUNCTIONS */
 function formatDate(epoch_time) {
-  var date_obj = new Date();
-  date_obj.setUTCSeconds(epoch_time);
+  var date_obj = new Date(epoch_time * 1000); // Convert to milliseconds
 
   var day = DAYS[date_obj.getDay()];
   var date = date_obj.getDate();
   var month = MONTHS[date_obj.getMonth()];
   //var year = date_obj.getFullYear();
 
-  return `${day}, ${date} ${month}`;
+  return `${day}, ${month} ${date}`;
 }

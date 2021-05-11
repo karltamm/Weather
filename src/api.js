@@ -1,9 +1,12 @@
+import COUNTRIES from "./countryCodes.json";
+
 /* CONSTANTS */
+const NUM_COUNTRIES = 249;
 const API_KEY = "9625d17991923b2fcd6ebcbc7a90fc25";
 const NUM_UPCOMING_DAYS = 5;
 
 /* FUNCTIONS */
-/* Forecast */
+/* Get location */
 function getUserCoords(callback) {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition((position) => {
@@ -36,6 +39,25 @@ function getCoordsByName(loc_name, callback, errorCallback) {
   );
 }
 
+function getNameByCoords(coords, callback, errorCallback) {
+  var api_url = `http://api.openweathermap.org/geo/1.0/reverse?lat=${coords.lat}&lon=${coords.lon}&limit=1&appid=${API_KEY}`;
+
+  apiCall(
+    api_url,
+    (response) => {
+      var location = {
+        name: response[0].name,
+        country: getCountryNameByCode(response[0].country),
+      };
+      callback(location);
+    },
+    () => {
+      errorCallback();
+    }
+  );
+}
+
+/* Forecast */
 function getForecast(coords, callback, errorCallback) {
   var api_url = `https://api.openweathermap.org/data/2.5/onecall?lat=${coords.lat}&lon=${coords.lon}&exclude=minutely,hourly,alerts&appid=${API_KEY}&units=metric&lang=en`;
   apiCall(
@@ -82,19 +104,19 @@ function handleDataError(data) {
 function formatForecastData(res) {
   var data = [];
 
-  var cur = res.current; // Data about current weather
+  var now = res.current; // Data about current weather
   var next = res.daily; // Data about current weather
 
   for (var day = 0; day <= NUM_UPCOMING_DAYS; day++) {
     if (day === 0) {
       /* Current weather */
       data[0] = {
-        time: cur.dt,
-        cur_temp: Math.round(cur.temp),
-        feels_like: Math.round(cur.feels_like),
-        wind: Math.round(cur.wind_speed),
-        desc: captalizeFirstLetter(cur.weather[0].description),
-        icon: cur.weather[0].icon,
+        time: now.dt,
+        temp: Math.round(now.temp),
+        feels: Math.round(now.feels_like),
+        wind: Math.round(now.wind_speed),
+        desc: captalizeFirstLetter(now.weather[0].description),
+        icon: now.weather[0].icon,
       };
     } else {
       /* Upcoming weather */
@@ -115,5 +137,14 @@ function captalizeFirstLetter(string) {
   return string[0].toUpperCase() + string.slice(1);
 }
 
+function getCountryNameByCode(code) {
+  /* ISO 3166 country codes */
+  for (var i = 0; i < NUM_COUNTRIES; i++) {
+    if (code === COUNTRIES[i]["alpha-2"]) {
+      return COUNTRIES[i].name;
+    }
+  }
+}
+
 /* EXPORT */
-export default { getUserCoords, getForecast, getCoordsByName };
+export default { getUserCoords, getForecast, getCoordsByName, getNameByCoords };
