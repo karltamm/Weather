@@ -21,7 +21,7 @@ function getUserCoords(callback) {
 }
 
 function getCoordsByName(loc_name, callback, errorCallback) {
-  var api_url = `http://api.openweathermap.org/geo/1.0/direct?q=${loc_name}&limit=1&appid=${API_KEY}`;
+  var api_url = `https://api.openweathermap.org/geo/1.0/direct?q=${loc_name}&limit=1&appid=${API_KEY}`;
 
   apiCall(
     api_url,
@@ -40,7 +40,7 @@ function getCoordsByName(loc_name, callback, errorCallback) {
 }
 
 function getNameByCoords(coords, callback, errorCallback) {
-  var api_url = `http://api.openweathermap.org/geo/1.0/reverse?lat=${coords.lat}&lon=${coords.lon}&limit=1&appid=${API_KEY}`;
+  var api_url = `https://api.openweathermap.org/geo/1.0/reverse?lat=${coords.lat}&lon=${coords.lon}&limit=1&appid=${API_KEY}`;
 
   apiCall(
     api_url,
