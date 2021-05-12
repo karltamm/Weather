@@ -17,6 +17,16 @@ section {
   margin-bottom: 60px;
 }
 
+/* Typography */
+#site_subtitle,
+#author,
+#location_name,
+.period_title,
+.date {
+  font-family: Cambria, "Hoefler Text", Utopia, "Liberation Serif",
+    "Nimbus Roman No9 L Regular", Times, "Times New Roman", serif;
+}
+
 /* Header */
 header {
   margin: 0 auto;
