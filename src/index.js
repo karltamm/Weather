@@ -150,7 +150,7 @@ function App() {
   }
 
   function getWeatherIcon(day) {
-    return `http://openweathermap.org/img/wn/${forecast[day].icon}@2x.png`;
+    return `https://openweathermap.org/img/wn/${forecast[day].icon}@2x.png`;
   }
 
   function showForecast() {
