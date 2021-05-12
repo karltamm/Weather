@@ -137,7 +137,7 @@ function App() {
 
           <div className="extra_side">
             <img
-              src={getWeatherIcon(0)}
+              src={getWeatherIcon(now.icon)}
               className="weather_icon"
               alt="A symbol for weather"
             />
@@ -149,8 +149,8 @@ function App() {
     );
   }
 
-  function getWeatherIcon(day) {
-    return `https://openweathermap.org/img/wn/${forecast[day].icon}@2x.png`;
+  function getWeatherIcon(icon) {
+    return `https://openweathermap.org/img/wn/${icon}@2x.png`;
   }
 
   function showForecast() {
@@ -196,7 +196,7 @@ function App() {
 
             <div className="extra_side">
               <img
-                src={getWeatherIcon(index)}
+                src={getWeatherIcon(data.icon)}
                 className="weather_icon"
                 alt="A symbol for weather"
               />
