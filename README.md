@@ -2,8 +2,6 @@
 
 [Link to the wep app](https://karltamm.github.io/Weather/)
 
-The weather app is built as a front-end developer assessment exercise for [Luminor](https://luminor.ee/).
-
 ## Features
 
 - Get current weather and 5-day forecast
